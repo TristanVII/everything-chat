@@ -10,6 +10,10 @@ const config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["'Geist Mono'", "monospace"],
+        mono: ["'Geist Mono'", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

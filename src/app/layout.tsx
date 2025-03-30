@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GeistMono } from 'geist/font/mono';
 import "./globals.css";
 import Providers from "./Providers";
 
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={GeistMono.className}>
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
