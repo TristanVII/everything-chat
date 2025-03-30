@@ -97,14 +97,14 @@ export default function LoginPage() {
         {/* Main content */}
         <div className="space-y-10">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-white">Chat on X</h1>
+            <h1 className="text-3xl font-bold text-white">Chat With Everyone</h1>
             <p className="text-base text-gray-400 mt-2">Let's get you connected with your network.</p>
           </div>
           
           <button
             onClick={handleSignIn}
             disabled={isLoading}
-            className="w-full py-4 bg-[#000000]/70 hover:bg-[#FFFFFF]/20 text-white text-lg font-medium rounded-3xl border border-[#333333]/80" >
+            className="w-full py-4 bg-[#000000]/40 hover:bg-[#FFFFFF]/10 text-white text-lg font-medium rounded-3xl border border-[#333333]/80" >
             {isLoading ? (
               <div className="h-5 w-5 mx-auto animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
