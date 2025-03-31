@@ -21,7 +21,7 @@ export default function Header({ roomId, uptime, activeTab, setActiveTab }: Head
         setTimeout(() => setCopied(false), 2000); // Reset icon after 2 seconds
       })
       .catch(err => {
-        console.error('Failed to copy room ID: ', err);
+        console.log('Failed to copy room ID: ', err);
         // Optionally show an error message to the user
       });
   };

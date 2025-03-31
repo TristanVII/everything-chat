@@ -1,30 +1,56 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Header from '@/components/room/Header';
 import VideoGrid from '@/components/room/VideoGrid';
 import SidebarTabs, { TabType } from '@/components/room/SidebarTabs';
+import { RemoteStreamsState, SignalingMessage, useWebRTC } from '@/hooks/useWebRTC';
+import { SignalingServer } from '@/lib/signalingServer';
 
-export default function RoomPage() {
+function initializeSignalingChannel(roomId: string) {
+  const ws = new WebSocket(`ws://localhost:8080/ws?roomId=${roomId}`); // Replace with your Go server WS endpoint
+  const signalingChannel = new SignalingServer(ws, roomId);
+  return signalingChannel;
+}
+
+export default function RoomPage() { 
   const params = useParams();
-  const roomId = params.id as string; // Type assertion, consider adding validation
+  const roomId = params.id as string;
   const [permissionsGranted, setPermissionsGranted] = useState(false);
-  const [uptime, setUptime] = useState("00:00"); // When first load the page, get the room state, which includes the current uptime in ms.
+  const [uptime, setUptime] = useState("00:00");
   const [activeTab, setActiveTab] = useState<TabType>('chat');
+  const [signalingChannel, setSignalingChannel] = useState<any>(null); // State for signaling channel instance
 
-  // Simulate asking for permissions
+  // Initialize signaling channel when roomId is available
   useEffect(() => {
-    // In a real app, you'd use navigator.mediaDevices.getUserMedia here
-    // and update state based on success/failure.
-    const timer = setTimeout(() => {
-      // Simulate granting permissions after a short delay
-      console.log("Permissions granted (simulated).");
-      setPermissionsGranted(true);
-    }, 1500); // Simulate a 1.5 second permission prompt
+      if (roomId) {
+          const channel = initializeSignalingChannel(roomId);
+          setSignalingChannel(channel);
 
-    return () => clearTimeout(timer);
-  }, []);
+          // Cleanup signaling channel on component unmount or roomId change
+          return () => {
+              console.log("Cleaning up signaling channel connection.");
+              channel.disconnect();
+              setSignalingChannel(null);
+          };
+      }
+  }, [roomId]);
+  
+  
+  const { localStream, remoteStreams, initializeMedia } = useWebRTC(roomId, signalingChannel);
+
+  // Use the WebRTC hook, passing the signaling channel instance
+
+  // Request permissions after component mounts
+  useEffect(() => {
+    async function getMedia() {
+      const granted = await initializeMedia();
+      setPermissionsGranted(granted);
+    }
+    getMedia();
+    // No cleanup needed here as useWebRTC handles stream cleanup
+  }, [initializeMedia]); // Rerun if initializeMedia changes (it shouldn't due to useCallback)
 
   // Placeholder for uptime calculation
   useEffect(() => {
@@ -55,6 +81,13 @@ export default function RoomPage() {
     );
   }
 
+  // Combine local and remote streams for the VideoGrid
+  const allStreams = { ...remoteStreams };
+  if (localStream) {
+     // Assign a special key or use your actual peerId for the local stream
+    allStreams['local'] = localStream;
+  }
+
   return (
     <div className="flex h-screen flex-col bg-[#202124] text-white">
       <Header 
@@ -64,7 +97,7 @@ export default function RoomPage() {
         setActiveTab={setActiveTab}
       />
       <div className="flex flex-1 overflow-hidden">
-        <VideoGrid />
+        <VideoGrid streams={allStreams} />
         <SidebarTabs activeTab={activeTab} />
       </div>
     </div>

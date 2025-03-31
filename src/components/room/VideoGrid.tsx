@@ -1,5 +1,11 @@
 'use client';
 
+import React, { useEffect, useRef } from 'react';
+
+interface VideoGridProps {
+    streams: { [id: string]: MediaStream }; // Accept streams map
+}
+
 // Function to determine grid layout based on participant count
 const getGridLayout = (count: number): { cols: number; rows: number } => {
   if (count <= 0) return { cols: 1, rows: 1 };
@@ -16,42 +22,59 @@ const getGridLayout = (count: number): { cols: number; rows: number } => {
   return { cols, rows };
 };
 
-// Placeholder component for video streams
-export default function VideoGrid() {
-  // Replace with actual WebRTC video elements and logic
-  const participants = [
-    "Tristan Davis", "User2 (Guest)", "User3 (Guest)", 
-  ]; 
-  const participantCount = participants.length;
-  const { cols, rows } = getGridLayout(participantCount);
+// Video element component to handle attaching the stream
+const VideoPlayer = ({ stream, isLocal }: { stream: MediaStream, isLocal: boolean }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Define inline styles for the grid container
-  const gridStyle = {
-    gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-    gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
-  };
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            console.log(`Attaching ${isLocal ? 'local' : 'remote'} stream to video element`);
+            videoRef.current.srcObject = stream;
+        } else {
+            console.log("Video ref or stream not ready for attachment.");
+        }
+        // No cleanup needed for srcObject removal usually, browser handles it.
+    }, [stream, isLocal]);
 
-  return (
-    // Apply Tailwind grid and the inline styles
-    <div 
-      className="flex-1 grid gap-1 p-1 bg-[#111111] overflow-auto"
-      style={gridStyle}
-    >
-      {participants.map((name, index) => (
-        <div 
-          key={index} 
-          className="relative flex items-center justify-center bg-black rounded overflow-hidden min-h-0" 
+    return (
+        <video
+            ref={videoRef}
+            autoPlay
+            playsInline // Important for mobile browsers
+            muted={isLocal} // Mute local stream to prevent echo
+            className="w-full h-full object-cover" // Ensure video fills the container
+        />
+    );
+};
+
+export default function VideoGrid({ streams }: VideoGridProps) {
+    const participantIds = Object.keys(streams); // Get IDs from the streams map
+    const participantCount = participantIds.length;
+    const { cols, rows } = getGridLayout(participantCount);
+
+    const gridStyle = {
+        gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+    };
+
+    return (
+        <div
+            className="flex-1 grid gap-1 p-1 bg-gray-100 overflow-auto"
+            style={gridStyle}
         >
-          {/* Placeholder for video element */}
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            {/* In a real app, a <video> tag would go here */}
-            <span className="text-lg text-center p-2">Video for {name}</span> 
-          </div>
-          <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
-            {name}
-          </div>
+            {participantIds.map((id) => (
+                <div
+                    key={id}
+                    className="relative flex items-center justify-center bg-black rounded overflow-hidden min-h-0 border border-gray-200" // Use black bg for video contrast
+                >
+                    <VideoPlayer stream={streams[id]} isLocal={id === 'local'} />
+                    {/* Overlay for name */}
+                    <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-xs text-white">
+                        {id === 'local' ? 'You' : `User: ${id.substring(0, 6)}...`} {/* Display name/ID */}
+                    </div>
+                </div>
+            ))}
+            {/* Optional: Add placeholders if participantCount < cols * rows */}
         </div>
-      ))}
-    </div>
-  );
+    );
 } 
