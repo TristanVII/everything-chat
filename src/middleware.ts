@@ -8,8 +8,8 @@ export { default } from "next-auth/middleware";
 export const config = {
   // Apply middleware only to these specific routes
   matcher: [
-    '/home',
-    '/settings',
-    '/room/:path*', // Matches /room/anything
+    // '/home',
+    // '/settings',
+    // '/room/:path*', // Matches /room/anything
   ],
 }; 
